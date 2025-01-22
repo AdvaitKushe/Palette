@@ -1,1 +1,1 @@
-# htmlCssPractice
+# Palette

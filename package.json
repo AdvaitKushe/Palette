@@ -23,6 +23,8 @@
   "dependencies": {
     "@electron-toolkit/preload": "^3.0.1",
     "@electron-toolkit/utils": "^3.0.0",
+    "bootstrap-icons": "^1.11.3",
+    "jotai": "^2.11.1",
     "tailwind-merge": "^2.6.0"
   },
   "devDependencies": {

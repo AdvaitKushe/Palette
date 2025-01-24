@@ -1,14 +1,15 @@
-import { ComponentProps } from "react"
+import { ComponentProps } from 'react'
 
-import { twMerge } from "tailwind-merge"
+import { twMerge } from 'tailwind-merge'
+import { ActionButton } from './ActionButton'
 
 export const Search = ({ className, ...props }: ComponentProps<'button'>) => {
   return (
-    <button
-      className={twMerge('flex flex-row items-center justify-center', className)}
+    <ActionButton
+      className={twMerge('flex flex-row items-center justify-center mr-1', className)}
       {...props}
     >
-      
-    </button>
+      <i className="bi bi-search"></i>
+    </ActionButton>
   )
 }

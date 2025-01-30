@@ -9,8 +9,8 @@ export default function ModelChoice({
   ...props
 }: {
   company: string
-  children: string[]
-  onModelSelect: (model: string, company: string) => void
+  children: string[][]
+  onModelSelect: (model: string[], company: string) => void
 } & ComponentProps<'div'>) {
   const [isOpen, setIsOpen] = useState(false)
   return (
@@ -32,19 +32,21 @@ export default function ModelChoice({
             onMouseLeave={() => setIsOpen(false)}
           />
           <div
-            className="absolute left-full top-0 ml-2 bg-zinc-900/30 min-w-[200px] rounded-md shadow-lg"
+            className="absolute left-full top-0 ml-2 bg-zinc-800/100 min-w-[200px] rounded-md shadow-lg"
             onMouseEnter={() => setIsOpen(true)}
             onMouseLeave={() => setIsOpen(false)}
           >
             {children.map((child, index) => (
               <div
                 key={index}
-                className="w-full rounded-md px-4 py-2 hover:bg-white/10 cursor-pointer transition-all duration-200 flex items-center justify-between"
+                className="w-full rounded-md px-4 py-2  cursor-pointer transition-all duration-200 flex items-center justify-between"
                 onClick={() => {
                   onModelSelect(child, company)
                 }}
               >
-                <span className="flex-grow text-center">{child}</span>
+                <div className="flex flex-row items-center justify-center hover:bg-white/10 rounded-md px-1 py-1 text-sm w-full">
+                  {child[0]}
+                </div>
               </div>
             ))}
           </div>

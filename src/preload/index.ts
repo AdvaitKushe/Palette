@@ -1,13 +1,42 @@
-import { contextBridge } from "electron"
+import { contextBridge, ipcRenderer } from "electron"
+
 
 if (!process.contextIsolated) {
   throw new Error('Context isolation is not enabled')
 }
 
 try {
-  contextBridge.exposeInMainWorld('api', {
-    //TODO: Add API here
+  console.log('Attempting to expose API...')
+
+  contextBridge.exposeInMainWorld('electron', {
+    auth: {
+      on(channel: string, func: (...args: any[]) => void) {
+        const validChannels = ['send-token']
+        if(validChannels.includes(channel)) {
+          ipcRenderer.on(channel, (_, ...args) => func(...args))
+        }
+      }
+    },
+    sendUserData: (user: any) => ipcRenderer.invoke("user-data", user)
   })
+
+  contextBridge.exposeInMainWorld('api', {
+    getSettings: () => ipcRenderer.invoke('getSettings'),
+    saveSettings: (settings: any) => ipcRenderer.invoke('saveSettings', settings),
+    getGeneratedResponse: (userInput: any) => ipcRenderer.invoke('getGeneratedResponse', userInput)
+  })
+  console.log('API exposed successfully')
 } catch (error) {
-  console.error(error)
+  console.error('Failed to expose API:', error)
+}
+
+// Add this to your global.d.ts or a similar type declaration file:
+declare global {
+  interface Window {
+    api: {
+      saveSettings: (settings: any) => Promise<any>
+      getSettings: () => Promise<any>
+      getGeneratedResponse: (userInput: any) => Promise<any>
+    }
+  }
 }

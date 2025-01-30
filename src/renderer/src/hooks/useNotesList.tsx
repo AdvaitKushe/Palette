@@ -1,3 +1,4 @@
+
 import { notesAtom, selectedNoteIndexAtom } from '../store'
 import { useAtom, useAtomValue } from 'jotai'
 
@@ -19,4 +20,7 @@ export const useNotesList = ({ onSelect }: { onSelect?: () => void }) => {
     selectedNoteIndex,
     handleNoteSelect
   }
+
+
+
 }

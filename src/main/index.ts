@@ -1,17 +1,33 @@
-import { app, shell, BrowserWindow, ipcMain } from 'electron'
-import { join } from 'path'
+import { app, shell, BrowserWindow, ipcMain, session, dialog } from 'electron'
+import path, { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
 
+let mainWindow;
+
+if (process.defaultApp) {
+  if (process.argv.length >= 2) {
+    console.log(process.argv[1])
+    console.log(path.resolve(process.argv[1]))
+
+    app.setAsDefaultProtocolClient('palette', process.execPath, [path.resolve(process.argv[1])])
+
+  }else{
+    app.setAsDefaultProtocolClient('palette')
+  }
+}
+
+
+
 function createWindow(): void {
-  const mainWindow = new BrowserWindow({
+   mainWindow = new BrowserWindow({
     width: 900,
     height: 670,
     show: false,
     autoHideMenuBar: true,
     ...(process.platform === 'linux' ? { icon } : {}),
     center: true,
-    title: 'NoteMark',
+    title: 'Palette',
     frame: false,
     vibrancy: 'under-window',
     visualEffectState: 'active',
@@ -20,7 +36,8 @@ function createWindow(): void {
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
       sandbox: true,
-      contextIsolation: true
+      contextIsolation: true,
+      nodeIntegration: false
     }
   })
 
@@ -33,6 +50,40 @@ function createWindow(): void {
     return { action: 'deny' }
   })
 
+  const gotTheLock = app.requestSingleInstanceLock()
+  if (!gotTheLock) {
+    app.quit()
+  } else {
+    app.on('second-instance', (event, commandLine, workingDirectory) => {
+      if (mainWindow) {
+        if (mainWindow.isMinimized()) mainWindow.restore()
+        mainWindow.focus()
+        mainWindow.webContents.send('send-token', "Hello World")
+      }
+    })
+  }
+
+  app.on('open-url', (event, url) => {
+    event.preventDefault()
+    if (mainWindow) {
+      if (mainWindow.isMinimized()) mainWindow.restore()
+      mainWindow.focus()
+      mainWindow.webContents.send('send-token', "Hello World")
+    }
+  })
+
+  // For macOS, we need to handle the protocol before app is ready
+  app.on('will-finish-launching', () => {
+    app.on('open-url', (event, url) => {
+      event.preventDefault()
+      if (mainWindow) {
+        if (mainWindow.isMinimized()) mainWindow.restore()
+        mainWindow.focus()
+        mainWindow.webContents.send('send-token', "Hello World")
+      }
+    })
+  })
+
   // HMR for renderer base on electron-vite cli.
   // Load the remote URL for development or the local html file for production.
   if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
@@ -40,6 +91,13 @@ function createWindow(): void {
   } else {
     mainWindow.loadFile(join(__dirname, '../renderer/index.html'))
   }
+
+  ipcMain.handle("user-data", (_, user) => {
+    console.log("Authenticated User:", user);
+  }); 
+
+  // Add this temporarily for debugging
+  mainWindow.webContents.openDevTools()
 }
 
 // This method will be called when Electron has finished
@@ -57,7 +115,51 @@ app.whenReady().then(() => {
   })
 
   // IPC test
-  ipcMain.on('ping', () => console.log('pong'))
+  //API bussiness logic
+  ipcMain.handle('getSettings', async () => {
+    try {
+      const response = await fetch('http://127.0.0.1:5001/api/settings')
+      const data = await response.json()
+      return data
+    } catch (error) {
+      console.error('Error fetching settings:', error)
+      throw error
+    }
+  })
+
+  ipcMain.handle('saveSettings', async (_, settings) => {
+    try {
+      const response = await fetch('http://127.0.0.1:5001/api/settings', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(settings)
+      })
+      const data = await response.json()
+      return data
+    } catch (error) {
+      console.error('Error saving settings:', error)
+      throw error
+    }
+  })
+
+  ipcMain.handle('getGeneratedResponse', async (_, userInput) => {
+    try {
+      const response = await fetch('http://127.0.0.1:5001/api/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify( userInput )
+      })
+      const data = await response.json()
+      return data
+    } catch (error) {
+      console.error('Error fetching generated response:', error)
+      throw error
+    }
+  })
 
   createWindow()
 

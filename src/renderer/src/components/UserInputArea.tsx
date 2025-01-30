@@ -1,20 +1,23 @@
 import { ComponentProps, KeyboardEvent, useState } from 'react'
 import { twMerge } from 'tailwind-merge'
 import { SendChat } from './Buttons'
-import { useSetAtom } from 'jotai'
-import { createNewNoteAtom } from '../store/index'
+import { useSetAtom, useAtom } from 'jotai'
+import { createNewNoteAtom, selectedModelAtom, addMessageAtom } from '../store/index'
 import { useNotesList } from '@renderer/hooks/useNotesList'
 
 export const UserInputArea = ({ className, ...props }: ComponentProps<'div'>) => {
   const [rows, setRows] = useState(1)
   const MAX_ROWS = 7
   const createNewNote = useSetAtom(createNewNoteAtom)
+  const addMessage = useSetAtom(addMessageAtom)
+ 
   const [newNoteTitle, setNewNoteTitle] = useState('New Note')
-  const { notes, selectedNoteIndex, handleNoteSelect } = useNotesList({
+  const { selectedNoteIndex } = useNotesList({
     onSelect: () => {
       console.log('note selected')
     }
   })
+  const [model] = useAtom(selectedModelAtom)
 
   const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && e.shiftKey) {
@@ -50,7 +53,18 @@ export const UserInputArea = ({ className, ...props }: ComponentProps<'div'>) =>
         style={{ lineHeight: '1.5' }}
         onChange={(e) => setNewNoteTitle(e.currentTarget.value)}
       />
-      <SendChat onClick={() => selectedNoteIndex==null ? createNewNote(newNoteTitle) : console.log('note selected')} />
+      <SendChat
+        onClick={() => {
+         
+          selectedNoteIndex == null
+            ? createNewNote(newNoteTitle, {
+                prompt: newNoteTitle,
+                company: model[0], // company from selected model
+                model: model[1] // model name from selected model
+              })
+            : addMessage(newNoteTitle)
+        }}
+      />
     </div>
   )
 }

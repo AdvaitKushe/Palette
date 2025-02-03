@@ -12,7 +12,14 @@ export const RootLayout = ({ children, className, ...props }: ComponentProps<'ma
     </main>
   )
 }
-
+export const RootSignIn = ({ children, className, ...props }: ComponentProps<'main'>) => {
+  //this extends the main tag, so all main tags will be compatible with this component, and we can pass in any other props
+  return (
+    <main className={twMerge('flex flex-col h-screen w-full', className)} {...props}>
+      {children}
+    </main>
+  )
+}
 export const Sidebar = ({ children, className, ...props }: ComponentProps<'aside'>) => {
   return (
     <aside

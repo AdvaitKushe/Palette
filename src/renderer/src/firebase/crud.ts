@@ -1,4 +1,4 @@
-import { addDoc, collection, doc, getDocs, query } from "firebase/firestore";
+import { addDoc, collection, getDocs, query } from "firebase/firestore";
 import { db } from "./fire";
 
 interface Todo {
@@ -7,9 +7,9 @@ interface Todo {
   description: string
 }
 
-export const createTodo = async (data) => {
+export const createCollection = async (collectionName: string, data: any) => {
   try {
-    const docRef = collection(db, "todo");
+    const docRef = collection(db, collectionName);
     const res = await addDoc(docRef, data);
     return { res, status: 200 };
   } catch (error) {

@@ -10,6 +10,7 @@ export const UserInputArea = ({ className, ...props }: ComponentProps<'div'>) =>
   const MAX_ROWS = 7
   const createNewNote = useSetAtom(createNewNoteAtom)
   const addMessage = useSetAtom(addMessageAtom)
+
  
   const [newNoteTitle, setNewNoteTitle] = useState('New Note')
   const { selectedNoteIndex } = useNotesList({

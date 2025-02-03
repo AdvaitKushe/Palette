@@ -7,17 +7,13 @@ let mainWindow;
 
 if (process.defaultApp) {
   if (process.argv.length >= 2) {
-    console.log(process.argv[1])
-    console.log(path.resolve(process.argv[1]))
-
     app.setAsDefaultProtocolClient('palette', process.execPath, [path.resolve(process.argv[1])])
-
-  }else{
-    app.setAsDefaultProtocolClient('palette')
   }
 }
 
-
+if (!app.isDefaultProtocolClient('palette')) {
+  app.setAsDefaultProtocolClient('palette')
+}
 
 function createWindow(): void {
    mainWindow = new BrowserWindow({
@@ -51,6 +47,7 @@ function createWindow(): void {
   })
 
   const gotTheLock = app.requestSingleInstanceLock()
+  // Windows 
   if (!gotTheLock) {
     app.quit()
   } else {
@@ -58,31 +55,37 @@ function createWindow(): void {
       if (mainWindow) {
         if (mainWindow.isMinimized()) mainWindow.restore()
         mainWindow.focus()
-        mainWindow.webContents.send('send-token', "Hello World")
+  
+        // Parse the token from the protocol URL
+        const url = commandLine[commandLine.length - 1]
+        if (url.startsWith('palette://')) {
+          const urlParams = new URLSearchParams(url.replace('palette://', ''))
+          const token = urlParams.get('token')
+          mainWindow.webContents.send('send-token', urlParams)
+        }
       }
     })
   }
-
+  
+  //Mac
   app.on('open-url', (event, url) => {
     event.preventDefault()
     if (mainWindow) {
       if (mainWindow.isMinimized()) mainWindow.restore()
       mainWindow.focus()
-      mainWindow.webContents.send('send-token', "Hello World")
+      
+      // Parse the token from the protocol URL
+      if (url.startsWith('palette://')) {
+        const urlParams = new URLSearchParams(url.replace('palette://', ''))
+        console.log(urlParams)
+        const token = urlParams.get('token')
+        console.log(token)
+        mainWindow.webContents.send('send-token', token)
+      }
     }
   })
 
   // For macOS, we need to handle the protocol before app is ready
-  app.on('will-finish-launching', () => {
-    app.on('open-url', (event, url) => {
-      event.preventDefault()
-      if (mainWindow) {
-        if (mainWindow.isMinimized()) mainWindow.restore()
-        mainWindow.focus()
-        mainWindow.webContents.send('send-token', "Hello World")
-      }
-    })
-  })
 
   // HMR for renderer base on electron-vite cli.
   // Load the remote URL for development or the local html file for production.
@@ -116,33 +119,28 @@ app.whenReady().then(() => {
 
   // IPC test
   //API bussiness logic
-  ipcMain.handle('getSettings', async () => {
-    try {
-      const response = await fetch('http://127.0.0.1:5001/api/settings')
-      const data = await response.json()
-      return data
-    } catch (error) {
-      console.error('Error fetching settings:', error)
-      throw error
-    }
+  ipcMain.handle('open-external', (_, url) => {
+
+    shell.openExternal(url)
+    
   })
 
-  ipcMain.handle('saveSettings', async (_, settings) => {
-    try {
-      const response = await fetch('http://127.0.0.1:5001/api/settings', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(settings)
-      })
-      const data = await response.json()
-      return data
-    } catch (error) {
-      console.error('Error saving settings:', error)
-      throw error
-    }
-  })
+  // ipcMain.handle('saveSettings', async (_, settings) => {
+  //   try {
+  //     const response = await fetch('http://127.0.0.1:5001/api/settings', {
+  //       method: 'POST',
+  //       headers: {
+  //         'Content-Type': 'application/json'
+  //       },
+  //       body: JSON.stringify(settings)
+  //     })
+  //     const data = await response.json()
+  //     return data
+  //   } catch (error) {
+  //     console.error('Error saving settings:', error)
+  //     throw error
+  //   }
+  // })
 
   ipcMain.handle('getGeneratedResponse', async (_, userInput) => {
     try {

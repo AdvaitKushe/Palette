@@ -3,10 +3,14 @@ import { ComponentProps, useEffect, useRef, useState } from 'react'
 import { ActionButton } from './ActionButton'
 
 import { SettingsDropdown } from './SettingsDropDown'
+import { doc, getDoc, updateDoc } from 'firebase/firestore'
+import { useAtom } from 'jotai'
+import { userIDAtom } from '@renderer/store'
+import { db } from '@renderer/firebase/fire'
 
 export const Settings = ({ className, ...props }: ComponentProps<'div'>) => {
   const [isOpen, setIsOpen] = useState(false)
-
+  const [userID] = useAtom(userIDAtom)
   const dropdownRef = useRef<HTMLDivElement>(null)
   const [settings, setSettings] = useState({
     OpenAI: '',
@@ -14,34 +18,69 @@ export const Settings = ({ className, ...props }: ComponentProps<'div'>) => {
     Anthropic: ''
   })
 
-  useEffect(() => {
-    const saveSettings = async () => {
-      try {
-        await window.api.saveSettings(settings).then((response) => {
-          console.log(response)
-        })
-      } catch (error) {
-        console.error('Error saving settings:', error)
-      }
+  const initSettings = async () => {
+    if (userID) {
+      const userRef = doc(db, 'users', userID)
+      const userDoc = await getDoc(userRef)
+      console.log('THUS IS TEST', {
+        OpenAI: userDoc.data()?.settings.OpenAI,
+        Gemini: userDoc.data()?.settings.Gemini,
+        Anthropic: userDoc.data()?.settings.Anthropic
+      })
+      setSettings(
+        {
+          OpenAI: userDoc.data()?.settings.OpenAI,
+          Gemini: userDoc.data()?.settings.Gemini,
+          Anthropic: userDoc.data()?.settings.Anthropic
+        } || { OpenAI: '', Gemini: '', Anthropic: '' }
+      )
     }
-    saveSettings()
-  }, [settings])
+    // try {
+    //   await window.api.saveSettings(settings).then((response) => {
+    //     console.log(response)
+    //   })
+    // } catch (error) {
+    //   console.error('Error saving settings:', error)
+    // }
+  }
+
+  useEffect(() => {
+    // initilize settings from firestore
+    initSettings()
+    
+  }, [])
+
+ 
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setIsOpen(false)
       }
+      
     }
-
     document.addEventListener('mousedown', handleClickOutside)
     return () => {
+      
       document.removeEventListener('mousedown', handleClickOutside)
     }
   }, [])
 
-  const handleSettingsChange = (value: string[]) => {
+  const handleSettingsChange = async (value: string[]) => {
     setSettings({ OpenAI: value[0], Gemini: value[1], Anthropic: value[2] })
+    
+    if (userID) {
+      try {
+        const userRef = doc(db, 'users', userID)
+        await updateDoc(userRef, {
+          'settings.OpenAI': value[0],
+          'settings.Gemini': value[1],
+          'settings.Anthropic': value[2]
+        })
+      } catch (error) {
+        console.error('Error updating settings in Firestore:', error)
+      }
+    }
   }
 
   return (

@@ -15,10 +15,13 @@ try {
         if(validChannels.includes(channel)) {
           ipcRenderer.on(channel, (_, ...args) => func(...args))
         }
-      }
+      },
+      openExternal: (url: string) => ipcRenderer.invoke('open-external', url)
     },
-    sendUserData: (user: any) => ipcRenderer.invoke("user-data", user)
+    
   })
+  
+
 
   contextBridge.exposeInMainWorld('api', {
     getSettings: () => ipcRenderer.invoke('getSettings'),

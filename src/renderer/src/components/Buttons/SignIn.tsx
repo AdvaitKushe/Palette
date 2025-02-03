@@ -1,6 +1,6 @@
 import { RootSignIn } from '../AppLayout'
 import { ActionButton } from './ActionButton'
-import { tokenAtom, userIDAtom } from '@renderer/store'
+import { tokenAtom, userIDAtom, loadNotesAtom } from '@renderer/store'
 import { useAtom } from 'jotai'
 import { doc, setDoc } from 'firebase/firestore'
 import { db } from '@renderer/firebase/fire'
@@ -19,6 +19,7 @@ interface GoogleUserInfo {
 export default function SignIn() {
   const [, setToken] = useAtom(tokenAtom)
   const [, setUserID] = useAtom(userIDAtom)
+  const [, loadNotes] = useAtom(loadNotesAtom)
 
   window.electron.auth.on('send-token', async function (token) {
     try {
@@ -49,9 +50,9 @@ export default function SignIn() {
         } else {
           console.log('User document already exists')
         }
+        setToken(token)
+        await loadNotes()
       }
-
-      setToken(token)
     } catch (error) {
       console.error('Error fetching user info:', error)
     }

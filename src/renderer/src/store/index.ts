@@ -15,9 +15,35 @@ const loadNotes = async () => {
     return notes
 }
 
-const notesAtomAsync = atom<NoteInfo[] | Promise<NoteInfo[]>>(loadNotes())
 
-export const notesAtom = unwrap(notesAtomAsync, (prev) => prev)
+// Create an atom that depends on userID
+const notesAtomAsync = atom<NoteInfo[]>([])
+
+export const notesAtom = atom(
+  (get) => get(notesAtomAsync),
+  (get, set, newNotes: NoteInfo[]) => set(notesAtomAsync, newNotes)
+)
+
+// Add a loader effect
+export const loadNotesAtom = atom(
+  null,
+  async (get, set) => {
+    const userId = get(userIDAtom)
+    if (!userId) return
+    
+    const docRef = collection(db, "users/" + userId + "/chats")
+    const res = await getDocs(docRef)
+    const notes: NoteInfo[] = res.docs.map(doc => ({
+      ...doc.data(),
+      key: doc.id,
+      uid: doc.data().uid || 0,
+      title: doc.data().title || '',
+      lastEditTime: doc.data().lastEditTime || Date.now(),
+      messages: doc.data().messages || []
+    } as NoteInfo)).sort((a, b) => b.lastEditTime - a.lastEditTime)
+    set(notesAtom, notes)
+  }
+)
 
 export const tokenAtom = atom<string | null>(null)
 

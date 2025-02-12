@@ -23,12 +23,26 @@
   "dependencies": {
     "@electron-toolkit/preload": "^3.0.1",
     "@electron-toolkit/utils": "^3.0.0",
-    "tailwind-merge": "^2.6.0"
+    "@types/react-syntax-highlighter": "^15.5.13",
+    "bootstrap-icons": "^1.11.3",
+    "firebase": "^11.2.0",
+    "jotai": "^2.11.1",
+    "lodash": "^4.17.21",
+    "react-dropzone": "^14.3.5",
+    "react-markdown": "^9.0.3",
+    "react-syntax-highlighter": "^15.6.1",
+    "react-type-animation": "^3.2.0",
+    "react-virtualized-auto-sizer": "^1.0.25",
+    "react-window": "^1.8.11",
+    "tailwind-merge": "^2.6.0",
+    "typewriter-effect": "^2.21.0",
+    "uuid": "^11.0.5"
   },
   "devDependencies": {
     "@electron-toolkit/eslint-config-prettier": "^2.0.0",
     "@electron-toolkit/eslint-config-ts": "^2.0.0",
     "@electron-toolkit/tsconfig": "^1.0.1",
+    "@tailwindcss/typography": "^0.5.16",
     "@types/node": "^20.14.8",
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
@@ -45,6 +59,15 @@
     "react-dom": "^18.3.1",
     "tailwindcss": "^3.4.17",
     "typescript": "^5.5.2",
-    "vite": "^5.3.1"
+    "vite": "^5.4.14"
+  },
+  "build": {
+    "icon": "build/icon.icns",
+    "win": {
+      "icon": "build/icon.ico"
+    },
+    "linux": {
+      "icon": "build/icons"
+    }
   }
 }

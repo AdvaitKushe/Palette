@@ -1,0 +1,8 @@
+.vscode
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+mock
+node_modules

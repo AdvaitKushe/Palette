@@ -4,5 +4,11 @@
 .env.development.local
 .env.test.local
 .env.production.local
-mock
+
 node_modules
+dist
+out
+mock
+Palette/.vscode
+Palette/.gitignore
+Palette/.prettierignore

@@ -1,11 +1,7 @@
 import { ComponentProps, useState } from 'react'
 import { twMerge } from 'tailwind-merge'
 
-export const DragAndDrop = ({
-  className,
-  inputProp,
-  ...props
-}: ComponentProps<'input'> & { inputProp: ComponentProps<'input'> }) => {
+export const DragAndDrop = ({ className, ...props }: ComponentProps<'input'>) => {
   const [isClicked, setIsClicked] = useState(false)
   const [isHover, setIsHover] = useState(false)
 

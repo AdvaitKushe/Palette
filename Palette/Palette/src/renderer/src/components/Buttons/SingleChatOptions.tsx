@@ -59,6 +59,8 @@ export const OptionsButton = ({
    
     
     await deleteNote(index)
+    setIsOpen(false)
+    isOptionsOpen(false)
   }
 
   return (

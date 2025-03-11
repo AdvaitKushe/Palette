@@ -26,4 +26,11 @@ export interface NoteInfo {
     }
   }
 
+  export interface userInput {
+    prompt: string
+    company: string
+    model: string
+    id?: string | null
+  }
+
   

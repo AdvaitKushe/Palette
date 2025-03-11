@@ -11,7 +11,7 @@ interface Window {
   api: {
     saveSettings: (settings: {OpenAI: string, Gemini: string, Anthropic: string}) => Promise<{response: string}>
     getSettings: () => Promise<{response: string}>
-    getGeneratedResponse: ({prompt: string, company: string, model: string, id: string, context: any}) => Promise<{company: string, response: string}>
+    getGeneratedResponse: ({prompt: string, company: string, model: string, id: string, context: any, files: any}) => Promise<{company: string, response: string}>
   }
   
 }

@@ -5,18 +5,17 @@ import { useAtom } from 'jotai'
 
 export const NewNotePage = ({
   className,
-  inputRef,
+
   sendFunction,
   setRows,
   MAX_ROWS,
   setMessage,
   ...props
 }: ComponentProps<'div'> & {
-  inputRef: React.RefObject<HTMLTextAreaElement>
   sendFunction: () => void
   setRows: React.Dispatch<React.SetStateAction<number>>
   MAX_ROWS: number
-  setMessage: (message: string) => void
+  setMessage: React.Dispatch<React.SetStateAction<string>>
 }) => {
   const [user] = useAtom(userAtom)
   return (
@@ -31,7 +30,6 @@ export const NewNotePage = ({
       </div>
 
       <ChatBox
-        inputRef={inputRef}
         sendFunction={sendFunction}
         setRows={setRows}
         MAX_ROWS={MAX_ROWS}

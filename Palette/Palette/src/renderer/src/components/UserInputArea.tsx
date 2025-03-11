@@ -1,4 +1,4 @@
-import { ComponentProps, useRef, useState } from 'react'
+import { ComponentProps, useState } from 'react'
 import { useSetAtom, useAtom } from 'jotai'
 import {
   createNewNoteAtom,
@@ -19,17 +19,15 @@ export const UserInputArea = ({
   const MAX_ROWS = 7
   const createNewNote = useSetAtom(createNewNoteAtom)
   const addMessage = useSetAtom(addMessageAtom)
-  const inputRef = useRef<HTMLTextAreaElement>(null)
   const setIsWaitingForResponse = useSetAtom(isWaitingForResponseAtom)
   const [message, setMessage] = useAtom(messageAtom)
-  const [, setCurrImageArray] = useAtom(currImageArrayAtom)
+  const [currImageArray, setCurrImageArray] = useAtom(currImageArrayAtom)
   const { selectedNoteIndex } = useNotesList({})
 
   const [model] = useAtom(selectedModelAtom)
 
   const sendFunc = sendFunction(
     setIsWaitingForResponse,
-    inputRef,
     createNewNote,
     addMessage,
     message,
@@ -42,7 +40,6 @@ export const UserInputArea = ({
   return selectedNoteIndex != null ? (
     <div className="w-full ">
       <ChatBox
-        inputRef={inputRef}
         sendFunction={sendFunc}
         setRows={setRows}
         MAX_ROWS={MAX_ROWS}
@@ -50,9 +47,8 @@ export const UserInputArea = ({
       />
     </div>
   ) : (
-    <div className="w-full h-screen flex items-center justify-center mb-[50%]">
+    <div className="w-full h-screen flex items-center justify-center mb-[20%]">
       <NewNotePage
-        inputRef={inputRef}
         sendFunction={sendFunc}
         setRows={setRows}
         MAX_ROWS={MAX_ROWS}

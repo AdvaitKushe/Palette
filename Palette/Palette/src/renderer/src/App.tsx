@@ -5,15 +5,18 @@ import { UserInputArea } from './components/UserInputArea'
 import { GeneratedChat } from './GeneratedChat'
 import SignIn from './components/Buttons/SignIn'
 import { useAtom } from 'jotai'
-import { isSearchOpenAtom, tokenAtom } from './store'
+import { currImageArrayAtom, isSearchOpenAtom, tokenAtom } from './store'
 import { useRef } from 'react'
 
 const App = () => {
   const [token] = useAtom(tokenAtom)
   const contentRef = useRef<HTMLDivElement>(null)
-  
+  const [, setCurrImageArray] = useAtom(currImageArrayAtom)
   const [isSearchOpen] = useAtom(isSearchOpenAtom)
-  
+  const onSelect = () => {
+    
+    setCurrImageArray([])
+  }
   
   return (
     <>
@@ -23,7 +26,7 @@ const App = () => {
           <RootLayout className="">
             <Sidebar className="">
               <SideBarActionRow className="flex justify-end mt-1 " />
-              <ChatHistory contentRef={contentRef} />
+              <ChatHistory contentRef={contentRef} onSelect={onSelect} />
             </Sidebar>
             <Content className="border-l bg-zinc-900/50 border-white/20 flex flex-col p-2 h-screen">
               <ContentActionRow />

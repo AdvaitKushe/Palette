@@ -1,12 +1,12 @@
-import { useAtom } from 'jotai'
-import { selectedModelAtom } from '../store'
-
+import { userInput } from 'src/renderer/shared/model'
 export const handleKeyDown = (
   e: React.KeyboardEvent<HTMLTextAreaElement>, 
-  sendFunction: () => void, 
+  sendFunction: (...args: any[]) => void, 
   
   setRows: React.Dispatch<React.SetStateAction<number>>, 
-  MAX_ROWS: number
+  MAX_ROWS: number,
+  inputRef?: React.RefObject<HTMLTextAreaElement>,
+
 ) => {
   const adjustHeight = (textarea: HTMLTextAreaElement) => {
     textarea.style.height = '10px'
@@ -14,21 +14,36 @@ export const handleKeyDown = (
     textarea.style.height = `${newHeight}px`
   }
 
-  if (e.key === 'Enter' && !e.shiftKey) {
+  if ((e.key === 'Enter' && !e.shiftKey)) {
     e.preventDefault()
-    sendFunction()
+    console.log("inputRef?.current?.value", inputRef?.current?.value)
+    if (inputRef?.current && inputRef?.current?.value !== '') {
+        sendFunction(inputRef)
+        inputRef.current.value = ''
+    }
   }
   
   if (e.key === 'Enter' && e.shiftKey) {
     e.preventDefault()
     const textarea = e.currentTarget
-    textarea.value += '\n'
+    const cursorPosition = textarea.selectionStart
+    const textBeforeCursor = textarea.value.substring(0, cursorPosition)
+    const textAfterCursor = textarea.value.substring(cursorPosition)
+    
+    textarea.value = textBeforeCursor + '\n' + textAfterCursor
+    textarea.selectionStart = textarea.selectionEnd = cursorPosition + 1
+    
     setRows((prev) => Math.min(prev + 1, MAX_ROWS))
     adjustHeight(textarea)
-    textarea.scrollTo({
-      top: textarea.scrollHeight,
-      behavior: 'smooth'
-    })
+    
+    // Only scroll if cursor is near the bottom
+    const isNearBottom = textarea.scrollHeight - textarea.scrollTop - textarea.clientHeight < 50
+    if (isNearBottom) {
+      textarea.scrollTo({
+        top: textarea.scrollHeight,
+        behavior: 'smooth'
+      })
+    }
   }
 
   if (e.key === 'Backspace' && e.currentTarget.value.endsWith('\n')) {
@@ -40,50 +55,47 @@ export const handleKeyDown = (
   adjustHeight(e.currentTarget)
 }
 
-export interface sendAMessage {
-  prompt: string
-  company: string
-  model: string
-  
-}
 
 export const sendFunction = (
-  setIsWaitingForResponse: (isWaitingForResponse: boolean) => void,
-  inputRef: React.RefObject<HTMLTextAreaElement>,
-  createNewNote: (message: string, sendAMessage: sendAMessage) => void,
+  setIsWaitingForResponse: React.Dispatch<React.SetStateAction<boolean>>,
+  createNewNote: (message: string, sendAMessage: userInput) => void,
   addMessage: (message: string) => void,
   message: string,
   selectedNoteIndex: number | null,
-  setMessage: (message: string) => void,
-  setCurrImageArray: (currImageArray: string[]) => void,
+  setMessage: React.Dispatch<React.SetStateAction<string>>,
+  setCurrImageArray: React.Dispatch<React.SetStateAction<(string | ArrayBuffer | null)[]>>,
   contentRef: React.RefObject<HTMLDivElement> | undefined,
-  model: string[]
+  model: string[],
+  
 ) => {
-  return () => {
+
+
+  return async () => {
     setIsWaitingForResponse(true)
-    if (inputRef.current?.value === '') {
+    
+    if (!message.trim()) {
+      setIsWaitingForResponse(false)
       return
     }
+    console.log("message", message)
 
-    selectedNoteIndex == null
-      ? createNewNote(message, {
+     selectedNoteIndex == null
+      ?  createNewNote(message, {
           prompt: message,
-          company: model[0], // company from selected model
-          model: model[1] // model name from selected model
+          company: model[0],
+          model: model[1],
+       
         })
       : addMessage(message)
-
-    if (inputRef.current) {
-      inputRef.current.value = ''
-      setMessage('')
-      setCurrImageArray([])
-    }
+    setMessage('')
+    //setCurrImageArray([])
 
     if (contentRef?.current) {
       contentRef.current.scrollTo({
         top: contentRef.current.scrollHeight,
         behavior: 'smooth'
       })
+      console.log("contentRef?.current", contentRef?.current)
     }
   }
 }

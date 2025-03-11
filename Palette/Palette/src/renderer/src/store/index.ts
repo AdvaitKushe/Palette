@@ -1,7 +1,7 @@
 import { atom } from "jotai";
 import debounce from 'lodash/debounce';
 
-import { Message, NoteInfo, User } from '../../shared/model';
+import { Message, NoteInfo, User, userInput } from '../../shared/model';
 import { addDoc, collection, doc, getDocs, updateDoc } from "firebase/firestore";
 import { db } from "../firebase/fire";
 import { deleteCollection } from "../firebase/crud";
@@ -51,7 +51,7 @@ export const loadNotesAtom = atom(
 
 export const tokenAtom = atom<string | null>(null)
 
-export const currImageArrayAtom = atom<(ArrayBuffer | string | null)[]>([])
+export const currImageArrayAtom = atom<(ArrayBuffer | string | null)[]>([''])
 
 export const userAtom = atom<User | null>(null)
 
@@ -63,18 +63,19 @@ export const userIDAtom = atom<string | null>(null)
 
 export const selectedNoteIndexAtom = atom<number | null>(null)
 
-export const selectedModelAtom = atom(['OpenAI', 'gpt-4o', 'OpenAI GPT-4o'])
+export const selectedModelAtom = atom(['OpenAI', 'chatgpt-4o-latest', 'OpenAI GPT-4o'])
 
 export const isWaitingForResponseAtom = atom<boolean>(false)
 
 
 export const createNewNoteAtom = atom(
   null,
-  async (get, set, title: string, userInput: {prompt: string, company: string, model: string, id?: string | null}) => {
+  async (get, set, title: string, userInput: userInput) => {
     const notes = await get(notesAtomAsync)
     const model = get(selectedModelAtom)
     const userId = get(userIDAtom)
     const currImageArray = get(currImageArrayAtom)
+    console.log("currImageArray", currImageArray)
     let newNote: NoteInfo = {
       title: title,
       uid: notes.length + 1,
@@ -110,10 +111,11 @@ export const createNewNoteAtom = atom(
     const response = await window.api.getGeneratedResponse({
       ...userInput, 
       id: userId, 
-      
+      files: currImageArray,
       context: []
     })
     
+    set(currImageArrayAtom, [])
     // Update the message with actual response
     const updatedMessages = [{
       conversation: {
@@ -121,7 +123,7 @@ export const createNewNoteAtom = atom(
         company: model[0],
         model: model[1],
         response: response.response,
-        files: currImageArray
+        files: ['']
       }
     }]
 
@@ -206,6 +208,7 @@ export const addMessageAtom = atom(
         company: model[0], 
         model: model[1], 
         id: userId,
+        files: currImageArray,
         context: notes[selectedNoteIndex]
           ?.messages
           ?.slice()
@@ -217,6 +220,8 @@ export const addMessageAtom = atom(
           }))
           .filter((msg): msg is {prompt: string, response: string} => msg !== null)
       })
+
+      
       
       const updatedMessage = {
         conversation: {

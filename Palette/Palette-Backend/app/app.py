@@ -4,11 +4,13 @@ from openai import OpenAI
 import firebase_admin
 from firebase_admin import firestore
 from firebase_admin import credentials
+from test import file
+from pypdf import PdfReader
 import anthropic
 import json
 import socket
-
-
+import base64
+import os
 # Move Firebase initialization to the global scope, outside of any route
 cred = credentials.Certificate(r"./mock/serviceAccountKey.json")
 try:
@@ -27,13 +29,26 @@ def index():
 def chat():
     try:
         data = request.get_json()
+        
    
         id = data['id']
         context = data['context']
-        
-        # Limit the context to 2000 characters
-        context = limit_context(context)
 
+        file_data = data['files']
+        if file_data:
+            print("entered")
+            file_data = handle_file_load(file_data)
+            print("file_data:", file_data['all_text'])
+            context.append({"files": file_data['all_text']})
+            for file in file_data['all_paths']:
+                os.remove(file)
+
+        
+
+        # Limit the context to 2000 characters
+        #context = limit_context(context)
+        print("context:", context)
+        print("Exited limit context")
         db = firestore.client()
         doc_ref = db.collection("users").document(id)
 
@@ -51,7 +66,9 @@ def chat():
         company = data['company']
         model = data['model']
         prompt = data['prompt']
-        context = data['context']
+        #context = data['context']
+        print("context:", context)
+
 
 
           
@@ -63,6 +80,7 @@ def chat():
                
                 {
                 "role": "user",
+                
                 "content": "user prompt:" + prompt + "Context (only use the context for this chat history if needed say this is the most you remember):" + str(context)
                 
                 }
@@ -101,39 +119,147 @@ def chat():
             result = message.content[0].text
            
             return jsonify({"response": result, "company": "anthropic"}), 200
-          
-
-
-                
     except Exception as e:
         print(f"Error: {str(e)}")
-        return jsonify({"error": str(e)}), 500   
+        return jsonify({"error": str(e)}), 500 
+    
+    
+        
+        
+    
+
+                
+      
         
 
-"""@app.route('/api/settings', methods=['GET','POST'])
-def settings():
-    config_path = './mock/config.json'
+class FileProcessor:
+    ALLOWED_EXTENSIONS = {
+        'application/pdf': '.pdf',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document': '.docx',
+        'image/jpeg': '.jpg',
+        'image/png': '.png',
+        'image/gif': '.gif',
+        'text/plain': '.txt'
+    }
+
+    @staticmethod
+    def get_mime_type(base64_data):
+        # Extract MIME type from data URI
+        try:
+            mime_type = base64_data.split(';')[0].split(':')[1]
+            return mime_type
+        except IndexError:
+            return None
+
+    @staticmethod
+    def get_file_extension(mime_type):
+        return FileProcessor.ALLOWED_EXTENSIONS.get(mime_type)
+
+    @staticmethod
+    def process_file(base64_data, file_extension):
+        try:
+            # Remove data URI prefix and decode
+            if ',' in base64_data:
+                file_data = base64.b64decode(base64_data.split(',')[1])
+            else:
+                file_data = base64.b64decode(base64_data)
+
+            # Generate unique filename
+            import uuid
+            filename = f"{str(uuid.uuid4())}{file_extension}"
+            
+            # Save file
+            with open(filename, 'wb') as f:
+                f.write(file_data)
+            
+            return filename
+        except Exception as e:
+            raise Exception(f"Error processing file: {str(e)}")
+
+
+def handle_file_load(raw_file_data):
+    allowed_file_data = raw_file_data
+   
     
-    # Create directories if they don't exist
-    os.makedirs(os.path.dirname(config_path), exist_ok=True)
-    
-    if request.method == 'POST':
-        data = request.get_json()
+
+    all_text = []
+    all_paths = []
+    for file in allowed_file_data:
+        if file:
+          
+            file_specs = upload_file(file)
+         
+            if file_specs['file_type'] == 'application/pdf':
+                text = extract_pdf_text(file_specs['file_path'])
+                all_text.append(text['text'])
+            all_paths.append(file_specs['file_path'])
+    print("all_paths:", all_paths)
+    return {"message": "Files uploaded successfully", "all_text": all_text, "all_paths": all_paths}
+
+
+
+def upload_file(file):
+    try:
+        # Get the base64 data from request
+        print("entered2")
+        data = file
         print(data)
+        if not data:
+            return 
+
+        # Get MIME type and file extension
+        mime_type = FileProcessor.get_mime_type(data)
+        if not mime_type:
+            return 
+
+        file_extension = FileProcessor.get_file_extension(mime_type)
+        if not file_extension:
+            return 
+
+        # Process and save the file
+        filename = FileProcessor.process_file(data, file_extension)
+
+        # Here you can add specific processing based on file type
+        result = {
+            'message': 'File successfully processed',
+            'file_path': filename,
+            'file_type': mime_type
+        }
+
+        # Add file-specific processing
+        if file_extension == '.pdf':
+            # Process PDF (example: use PyPDF2 or pdfplumber)
+            result['processor'] = 'PDF processor'
+        elif file_extension == '.docx':
+            # Process DOCX (example: use python-docx)
+            result['processor'] = 'DOCX processor'
+        elif file_extension in ['.jpg', '.png', '.gif']:
+            # Process images (example: use Pillow)
+            result['processor'] = 'Image processor'
+        elif file_extension == '.txt':
+            # Process text files
+            result['processor'] = 'Text processor'
         
-        # Create file if it doesn't exist
-        with open(config_path, 'w') as f:
-            f.write(json.dumps(data))
-        
-        return jsonify({"message": "Settings received"}), 200
-    else:
-        # Create empty config if file doesn't exist
-        if not os.path.exists(config_path):
-            with open(config_path, 'w') as f:
-                f.write('{}')
-                
-        return jsonify({"message": "Settings received"}), 200
-"""
+        return result
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+    
+
+
+
+def extract_pdf_text(path):
+    print("ENTERED EXTRACT PDF TEXT")
+    file_path = "./" + path
+    print("file_path:", file_path)
+    reader = PdfReader(file_path)
+    text = ''
+    for page in reader.pages:
+        text += page.extract_text()
+    return {"text": text}
+
+
 
 @app.route('/api/health', methods=['GET'])
 def health_check():
@@ -168,12 +294,28 @@ def limit_context(context_array, max_chars=2000):
     limited_context = []
     
     for item in context_array:
-        item_length = len(str(item['prompt'])) + len(str(item['response']))
-        if total_chars + item_length <= max_chars or not limited_context:
+        prompt_len = 0
+        response_len = 0
+        files_len = 0
+        if 'prompt' in item:
+            prompt_len = len(str(item['prompt']))
+        if 'response' in item:
+            response_len = len(str(item['response']))
+        if 'files' in item:
+            files_len = len(str(item['files']))
+            print("files_len:", files_len)
+
+        item_length = prompt_len + response_len + files_len
+        if total_chars + item_length <= max_chars:
             limited_context.append(item)
             total_chars += item_length
         else:
-            break
+            fill_chars = max_chars - total_chars
+            
+            
+
+
+
     
     return limited_context
 

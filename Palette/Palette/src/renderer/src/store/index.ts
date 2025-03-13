@@ -149,21 +149,13 @@ export const createNewNoteAtom = atom(
         model: model[1],
         id: userId,
         context: [],
-        files: []
+        files: currImageArray
       });
     } catch (error) {
       console.error('Error in stream:', error);
       set(isWaitingForResponseAtom, false);
     }
 
-    
-
-
-
-
-
-
-    
     
     set(currImageArrayAtom, [])
     // Update the message with actual response
@@ -173,7 +165,7 @@ export const createNewNoteAtom = atom(
         company: model[0],
         model: model[1],
         response: fullResponse,
-        files: ['']
+        files: currImageArray
       }
     }]
 
@@ -282,8 +274,17 @@ export const addMessageAtom = atom(
         company: model[0],
         model: model[1],
         id: userId,
-        context: [],
-        files: []
+        context:  notes[selectedNoteIndex]
+        ?.messages
+        ?.slice()
+        .reverse()
+        .map(message => message.conversation)
+        .map(msg => msg && ({
+          prompt: msg.prompt,
+          response: msg.response
+        }))
+        .filter((msg): msg is {prompt: string, response: string} => msg !== null),
+        files: currImageArray
       });
     } catch (error) {
       console.error('Error in stream:', error);

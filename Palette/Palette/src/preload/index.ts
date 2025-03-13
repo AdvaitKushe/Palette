@@ -1,5 +1,4 @@
 import { contextBridge, ipcRenderer } from "electron"
-import { electronAPI } from '@electron-toolkit/preload'
 
 
 if (!process.contextIsolated) {
@@ -27,7 +26,6 @@ try {
   contextBridge.exposeInMainWorld('api', {
     getSettings: () => ipcRenderer.invoke('getSettings'),
     saveSettings: (settings: any) => ipcRenderer.invoke('saveSettings', settings),
-    getGeneratedResponse: (userInput: any) => ipcRenderer.invoke('getGeneratedResponse', userInput),
     streamOpenai: (input) => ipcRenderer.invoke('streamOpenai', input),
     onStreamChunk: (callback) => ipcRenderer.on('stream-chunk', (_, chunk) => callback(chunk)),
     onStreamDone: (callback) => ipcRenderer.on('stream-done', () => callback()),
@@ -47,7 +45,6 @@ declare global {
     api: {
       saveSettings: (settings: any) => Promise<any>
       getSettings: () => Promise<any>
-      getGeneratedResponse: (userInput: any) => Promise<any>
       streamOpenai: (input: any) => Promise<boolean>
       onStreamChunk: (callback: (chunk: string) => void) => void
       onStreamDone: (callback: () => void) => void

@@ -136,23 +136,7 @@ app.whenReady().then(() => {
     
   })
 
-  // ipcMain.handle('saveSettings', async (_, settings) => {
-  //   try {
-  //     const response = await fetch('http://127.0.0.1:5001/api/settings', {
-  //       method: 'POST',
-  //       headers: {
-  //         'Content-Type': 'application/json'
-  //       },
-  //       body: JSON.stringify(settings)
-  //     })
-  //     const data = await response.json()
-  //     return data
-  //   } catch (error) {
-  //     console.error('Error saving settings:', error)
-  //     throw error
-  //   }
-  // })
-
+  
   ipcMain.handle('streamOpenai', async (event, userInput) => {
     try {
       console.log("Calling streamOpenai");
@@ -179,23 +163,6 @@ app.whenReady().then(() => {
     }
   });
 
-
-  ipcMain.handle('getGeneratedResponse', async (_, userInput) => {
-    try {
-      const response = await fetch('http://127.0.0.1:5001/api/chat', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify( userInput )
-      })
-      const data = await response.json()
-      return data
-    } catch (error) {
-      console.error('Error fetching generated response:', error)
-      throw error
-    }
-  })
 
   createWindow()
 

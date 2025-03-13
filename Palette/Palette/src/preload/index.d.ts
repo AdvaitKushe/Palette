@@ -11,7 +11,7 @@ declare global {
     api: {
       getSettings: () => Promise<any>
       saveSettings: (settings: any) => Promise<any>
-      getGeneratedResponse: (userInput: any) => Promise<any>
+   
     }
   }
 }

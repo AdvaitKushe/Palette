@@ -39,7 +39,14 @@ def stream():
     model = request.json['model']
     company = request.json['company']
 
-    
+
+    if file_data:
+        #print("entered")
+        file_data = handle_file_load(file_data)
+        #print("file_data:", file_data['all_text'])
+        context.append({"files": file_data['all_text']})
+        for file in file_data['all_paths']:
+            os.remove(file)
     
 
     db = firestore.client()
@@ -95,124 +102,12 @@ def stream_openai(message,  context, file_data, model, settings):
         for chunk in stream:
             if chunk.choices[0].delta.content is not None:
                 content = chunk.choices[0].delta.content
-                print(content, end='', flush=True)  # Print each chunk as it arrives
+                #print(content, end='', flush=True)  # Print each chunk as it arrives
                 yield content
     
     print("Starting stream response:")
     return generate(), {"Content-Type": "text/plain"}
 
-
-
-
-
-
-
-@app.route('/api/chat', methods=['GET','POST'])
-def chat():
-    try:
-        data = request.get_json()
-        
-   
-        id = data['id']
-        context = data['context']
-
-        file_data = data['files']
-        if file_data:
-            print("entered")
-            file_data = handle_file_load(file_data)
-            print("file_data:", file_data['all_text'])
-            context.append({"files": file_data['all_text']})
-            for file in file_data['all_paths']:
-                os.remove(file)
-
-        
-
-        # Limit the context to 2000 characters
-        #context = limit_context(context)
-        print("context:", context)
-        print("Exited limit context")
-        db = firestore.client()
-        doc_ref = db.collection("users").document(id)
-
-        doc = doc_ref.get()
-        # Access the settings field from the document
-        if doc.exists:
-            doc_data = doc.to_dict()
-            settings =doc_data.get('settings')  # or doc_data['settings'] if you're sure it exists
-        else:
-            print("Document does not exist")
-
-        openai_client = OpenAI(api_key=settings['OpenAI'])
-
-     
-        company = data['company']
-        model = data['model']
-        prompt = data['prompt']
-        #context = data['context']
-        print("context:", context)
-
-
-
-          
-        if company == 'OpenAI':
-            
-            completion = openai_client.chat.completions.create(
-            model=model,
-            messages=[
-               
-                {
-                "role": "user",
-                
-                "content": "user prompt:" + prompt + "Context (only use the context for this chat history):" + str(context)
-                
-                }
-
-                ]
-            )
-           
-            return jsonify({"response": completion.choices[0].message.content, "company": "openai"}), 200
-
-        elif company == 'Anthropic':
-           
-
-            
-
-            # Define your API endpoint
-            client = anthropic.Anthropic(
-                # defaults to os.environ.get("ANTHROPIC_API_KEY")
-                api_key=settings['Anthropic'],
-            )
-            print(client)
-            message = client.messages.create(
-                model=model,
-                max_tokens=1024,
-                messages=[
-                    {"role": "user", "content": "user prompt:" + prompt + "Context (only use the context for this chat history if needed say this is the most you remember):" + str(context)}
-                ]
-            )
-
-            # Make the POST request
-            
-
-            # Check the response
-            
-                # Success, process the JSON response
-            
-            result = message.content[0].text
-           
-            return jsonify({"response": result, "company": "anthropic"}), 200
-    except Exception as e:
-        print(f"Error: {str(e)}")
-        return jsonify({"error": str(e)}), 500 
-    
-    
-        
-        
-    
-
-                
-      
-        
 
 class FileProcessor:
     ALLOWED_EXTENSIONS = {
@@ -393,11 +288,6 @@ def limit_context(context_array, max_chars=2000):
             total_chars += item_length
         else:
             fill_chars = max_chars - total_chars
-            
-            
-
-
-
     
     return limited_context
 

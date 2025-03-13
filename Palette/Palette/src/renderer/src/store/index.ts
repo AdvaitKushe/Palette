@@ -1,4 +1,4 @@
-import { atom } from "jotai";
+import { atom, useSetAtom } from "jotai";
 import debounce from 'lodash/debounce';
 
 import { Message, NoteInfo, User, userInput } from '../../shared/model';
@@ -49,6 +49,8 @@ export const loadNotesAtom = atom(
   }
 )
 
+export const streamedResponseAtom = atom<string>('')
+
 export const tokenAtom = atom<string | null>(null)
 
 export const currImageArrayAtom = atom<(ArrayBuffer | string | null)[]>([''])
@@ -76,6 +78,7 @@ export const createNewNoteAtom = atom(
     const userId = get(userIDAtom)
     const currImageArray = get(currImageArrayAtom)
     console.log("currImageArray", currImageArray)
+    set(streamedResponseAtom, 'Thinking of a response...')
     let newNote: NoteInfo = {
       title: title,
       uid: notes.length + 1,
@@ -105,15 +108,62 @@ export const createNewNoteAtom = atom(
     // Update UI immediately
     set(notesAtom, [newNote, ...notes])
     set(selectedNoteIndexAtom, 0)
+    
 
     // Get actual response and update
     
-    const response = await window.api.getGeneratedResponse({
-      ...userInput, 
-      id: userId, 
-      files: currImageArray,
-      context: []
-    })
+    // const response = await window.api.getGeneratedResponse({
+    //   ...userInput, 
+    //   id: userId, 
+    //   files: currImageArray,
+    //   context: []
+    // })
+
+    let fullResponse = '';
+
+    // Remove any existing listeners before setting up new ones
+    window.api.removeStreamListeners();
+
+    // Set up stream chunk handler
+    window.api.onStreamChunk((chunk) => {
+      fullResponse += chunk;
+      // Update your UI here with the new chunk
+      
+      set(streamedResponseAtom, fullResponse)
+      // You might want to update your chat state here
+    });
+
+    // Set up stream completion handler
+    window.api.onStreamDone(() => {
+      
+      set(streamedResponseAtom, fullResponse)
+      // Handle completion, maybe update UI state
+      set(isWaitingForResponseAtom, false);
+    });
+
+    // Start the stream
+    try {
+      await window.api.streamOpenai({
+        prompt: userInput.prompt,
+        company: model[0],
+        model: model[1],
+        id: userId,
+        context: [],
+        files: []
+      });
+    } catch (error) {
+      console.error('Error in stream:', error);
+      set(isWaitingForResponseAtom, false);
+    }
+
+    
+
+
+
+
+
+
+    
     
     set(currImageArrayAtom, [])
     // Update the message with actual response
@@ -122,7 +172,7 @@ export const createNewNoteAtom = atom(
         prompt: userInput.prompt,
         company: model[0],
         model: model[1],
-        response: response.response,
+        response: fullResponse,
         files: ['']
       }
     }]
@@ -165,7 +215,7 @@ export const addMessageAtom = atom(
     const userId = get(userIDAtom)
     const selectedNoteIndex = get(selectedNoteIndexAtom)
     const currImageArray = get(currImageArrayAtom)
-
+    set(streamedResponseAtom, 'Thinking of a response...')
     if (selectedNoteIndex == null || !userId) return
     
     const currentNote = notes[selectedNoteIndex]
@@ -203,32 +253,52 @@ export const addMessageAtom = atom(
 
     // Debounce API calls to prevent overwhelming the system
     const debouncedApiCall = debounce(async () => {
-      const response = await window.api.getGeneratedResponse({
-        prompt: message, 
-        company: model[0], 
-        model: model[1], 
+      let fullResponse = '';
+
+    // Remove any existing listeners before setting up new ones
+    window.api.removeStreamListeners();
+
+    // Set up stream chunk handler
+    window.api.onStreamChunk((chunk) => {
+      fullResponse += chunk;
+      // Update your UI here with the new chunk
+      
+      set(streamedResponseAtom, fullResponse)
+      // You might want to update your chat state here
+    });
+
+    // Set up stream completion handler
+    window.api.onStreamDone(() => {
+      
+      set(streamedResponseAtom, fullResponse)
+      // Handle completion, maybe update UI state
+      set(isWaitingForResponseAtom, false);
+    });
+
+    // Start the stream
+    try {
+      await window.api.streamOpenai({
+        prompt: message,
+        company: model[0],
+        model: model[1],
         id: userId,
-        files: currImageArray,
-        context: notes[selectedNoteIndex]
-          ?.messages
-          ?.slice()
-          .reverse()
-          .map(message => message.conversation)
-          .map(msg => msg && ({
-            prompt: msg.prompt,
-            response: msg.response
-          }))
-          .filter((msg): msg is {prompt: string, response: string} => msg !== null)
-      })
+        context: [],
+        files: []
+      });
+    } catch (error) {
+      console.error('Error in stream:', error);
+      set(isWaitingForResponseAtom, false);
+    }
 
       
       
       const updatedMessage = {
         conversation: {
           ...newMessage.conversation,
-          response: response.response
+          response: fullResponse
         }
       }
+      
       
       const finalMessages = [...updatedMessages.slice(0, -1), updatedMessage]
       
@@ -242,7 +312,8 @@ export const addMessageAtom = atom(
         ))
       ])
     }, 300) // 300ms delay
-    
+    set(streamedResponseAtom, 'Thinking of a response...')
     debouncedApiCall()
+
   }
 )

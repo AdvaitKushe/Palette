@@ -2,6 +2,7 @@ import { ComponentProps, useEffect, useRef, useMemo } from 'react'
 
 import { useNotesList } from './hooks/useNotesList'
 
+
 import { PromptResponse } from './PromptResponse'
 import { ChatResponse } from './ChatResponse'
 import { isWaitingForResponseAtom } from './store'
@@ -37,16 +38,19 @@ export const GeneratedChat = ({ className, ...props }: ComponentProps<'div'>) =>
   return (
     <div {...props} ref={contentRef} className="flex-1 overflow-y-auto pb-[50px]">
       <div className="flex flex-col">
-        {selectedMessages?.map((message, index) => (
+        {selectedMessages?.map((thread, index) => (
+          console.log("selectedMessages", selectedMessages),
           <div
             key={index} // Use a stable ID if available
             className="flex flex-col whitespace-pre-wrap break-words overflow-x-hidden max-w-full"
           >
-            <PromptResponse message={message} />
+            <PromptResponse message={thread} />
             <ChatResponse
               typed={index === selectedMessages.length - 1 ? isWaitingForResponse : false}
-              message={message}
+              message={thread}
             />
+           
+            
           </div>
         ))}
       </div>

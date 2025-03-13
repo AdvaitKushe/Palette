@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, Response, jsonify
 from flask_cors import CORS
 from openai import OpenAI
 import firebase_admin
@@ -19,11 +19,93 @@ except ValueError:
     # App already initialized
     pass
 
+db = firestore.client()
+
+
 app = Flask(__name__)
 CORS(app)
 @app.route('/')
 def index():
     return "Hello World " + socket.gethostname()
+
+
+@app.route('/api/stream', methods= ['GET','POST'])
+def stream():
+    message = request.json['prompt']
+    id = request.json['id']
+    context = request.json['context']
+
+    file_data = request.json['files']
+    model = request.json['model']
+    company = request.json['company']
+
+    
+    
+
+    db = firestore.client()
+    doc_ref = db.collection("users").document(id)
+
+    doc = doc_ref.get()
+        # Access the settings field from the document
+    if doc.exists:
+        doc_data = doc.to_dict()
+        settings =doc_data.get('settings')  # or doc_data['settings'] if you're sure it exists
+    else:
+        print("Document does not exist")
+    
+
+    if company == 'OpenAI':
+        return stream_openai(message,  context, file_data, model, settings)
+    elif company == 'Anthropic':
+        return stream_anthropic(message,  context, file_data, model, settings)
+
+
+def stream_anthropic(message,  context, file_data, model, settings):
+    client = anthropic.Anthropic(
+                # defaults to os.environ.get("ANTHROPIC_API_KEY")
+                api_key=settings['Anthropic'],
+            )
+
+    def generate():
+        with client.messages.stream(
+            max_tokens=1024,
+            messages=[{"role": "user", "content": "user prompt:" + message + "Context (only use the context for this chat history):" + str(context)}],
+            model=model,
+        ) as stream:
+            for text in stream.text_stream:
+                print(text, end="", flush=True)
+                yield text
+
+    return Response(generate(), mimetype='text/plain')
+        
+    
+
+def stream_openai(message,  context, file_data, model, settings):
+    # Capture the message from the request before entering generator
+   
+    openai_client = OpenAI(api_key=settings['OpenAI'])
+    
+    def generate():
+        stream = openai_client.chat.completions.create(
+            model=model,  # Fixed model name from "gpt-4o"
+            messages=[{"role": "user", "content": "user prompt:" + message + "Context (only use the context for this chat history):" + str(context)}],  # Use captured message
+            stream=True,
+        )
+
+        for chunk in stream:
+            if chunk.choices[0].delta.content is not None:
+                content = chunk.choices[0].delta.content
+                print(content, end='', flush=True)  # Print each chunk as it arrives
+                yield content
+    
+    print("Starting stream response:")
+    return generate(), {"Content-Type": "text/plain"}
+
+
+
+
+
+
 
 @app.route('/api/chat', methods=['GET','POST'])
 def chat():
@@ -81,7 +163,7 @@ def chat():
                 {
                 "role": "user",
                 
-                "content": "user prompt:" + prompt + "Context (only use the context for this chat history if needed say this is the most you remember):" + str(context)
+                "content": "user prompt:" + prompt + "Context (only use the context for this chat history):" + str(context)
                 
                 }
 

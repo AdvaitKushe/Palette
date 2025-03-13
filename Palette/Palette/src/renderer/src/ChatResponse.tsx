@@ -6,36 +6,8 @@ import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
 //import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism'
 import { CopyButtonInChat } from './components/Buttons'
 import { materialDark } from 'react-syntax-highlighter/dist/esm/styles/prism'
-
-const useTypewriter = (text: string, speed: number = 50) => {
-  const [displayedText, setDisplayedText] = useState('')
-  const [isTyping, setIsTyping] = useState(true)
-
-  useEffect(() => {
-    // Reset states
-    setDisplayedText('')
-    setIsTyping(true)
-
-    // Calculate chunks of text instead of individual characters
-    const chunkSize = 4 // Adjust this value to balance performance and smoothness
-    const chunks = text.match(new RegExp(`.{1,${chunkSize}}`, 'g')) || []
-    let currentChunk = 0
-
-    const timer = setInterval(() => {
-      if (currentChunk < chunks.length) {
-        setDisplayedText(text.slice(0, (currentChunk + 1) * chunkSize))
-        currentChunk++
-      } else {
-        setIsTyping(false)
-        clearInterval(timer)
-      }
-    }, speed)
-
-    return () => clearInterval(timer)
-  }, [text, speed])
-
-  return { displayedText, isTyping }
-}
+import { useAtomValue, useSetAtom } from 'jotai'
+import { streamedResponseAtom } from './store'
 
 const CodeBlockAlt = memo(({ code }: { code: string }) => {
   return (
@@ -75,8 +47,13 @@ export const ChatResponse = ({
   typed
 }: { className?: string; message: Message; typed: boolean } & ComponentProps<'div'>) => {
   const ref = useRef<HTMLDivElement>(null)
-  const { displayedText, isTyping } = useTypewriter(message.conversation.response)
+  //const { displayedText, isTyping } = useTypewriter(message.conversation.response)
+  const currentText = useAtomValue(streamedResponseAtom)
+  console.log("typed", typed)
+ 
+  
 
+  
   return (
     <div className={twMerge('flex flex-col mt-1 mb-2', className)}>
       <div className="flex flex-row items-center text-xs text-gray-500 mb-0.5">
@@ -89,15 +66,15 @@ export const ChatResponse = ({
       <div ref={ref}>
         <ReactMarkdown
           className="text-sm prose prose-invert max-w-none 
-    prose-pre:bg-transparent prose-code:bg-transparent 
-    prose-pre:shadow-none prose-pre:border-0
-    prose-ul:my-1 prose-ul:pl-4 
-    prose-li:my-0 prose-li:marker:text-gray-400
-    prose-p:my-1 leading-normal
-    [&_p]:leading-normal [&_li]:leading-normal
-    prose-headings:my-2 prose-h1:text-xl prose-h2:text-lg prose-h3:text-base
-    prose-h1:mb-2 prose-h2:mb-2 prose-h3:mb-1
-    prose-ul:list-disc prose-ul:list-inside"
+                      prose-pre:bg-transparent prose-code:bg-transparent 
+                      prose-pre:shadow-none prose-pre:border-0
+                      prose-ul:my-1 prose-ul:pl-4 
+                      prose-li:my-0 prose-li:marker:text-gray-400
+                      prose-p:my-1 leading-normal
+                      [&_p]:leading-normal [&_li]:leading-normal
+                      prose-headings:my-2 prose-h1:text-xl prose-h2:text-lg prose-h3:text-base
+                      prose-h1:mb-2 prose-h2:mb-2 prose-h3:mb-1
+                      prose-ul:list-disc prose-ul:list-inside"
           components={{
             code: ({ children, className }) => {
               const match = /language-(\w+)/.exec(className || '')
@@ -109,7 +86,8 @@ export const ChatResponse = ({
             }
           }}
         >
-          {typed ? displayedText + (isTyping ? '▋' : '') : String(message.conversation.response)}
+          
+          {typed ? currentText : String(message.conversation.response)}
         </ReactMarkdown>
       </div>
     </div>

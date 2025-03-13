@@ -6,7 +6,7 @@ export const useNotesList = ({ onSelect }: { onSelect?: () => void }) => {
 
   const [selectedNoteIndex, setSelectedNoteIndex] = useAtom(selectedNoteIndexAtom)
   const setIsWaitingForResponse = useSetAtom(isWaitingForResponseAtom)
-  const setCurrImageArray = useSetAtom(currImageArrayAtom)
+  //const setCurrImageArray = useSetAtom(currImageArrayAtom)
   //async function to set the selected node index set the value of selectedNoteIndex
   const handleNoteSelect = (index: number | null) => async () => {
     if (onSelect) {

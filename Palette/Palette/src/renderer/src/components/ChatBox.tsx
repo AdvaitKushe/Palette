@@ -22,7 +22,7 @@ export const ChatBox = ({
 }) => {
   const [currImageArray, setCurrImageArray] = useAtom(currImageArrayAtom)
   const inputRef = useRef<HTMLTextAreaElement>(null)
-  console.log(currImageArray)
+  
 
 
   const onDrop = useCallback((acceptedFiles) => {
@@ -52,7 +52,7 @@ export const ChatBox = ({
     <div className="flex flex-row relative items-end w-full " {...getRootProps()} {...props}>
       <DragAndDrop {...getInputProps()} />
       <SendChat onClick={() => sendFunction(inputRef)} />
-      
+
       <div className="border border-zinc-400/50 rounded-[20px] min-h-[100px] w-full overflow-hidden flex">
         <textarea
           ref={inputRef}

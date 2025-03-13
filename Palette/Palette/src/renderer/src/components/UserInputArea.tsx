@@ -6,7 +6,8 @@ import {
   addMessageAtom,
   messageAtom,
   isWaitingForResponseAtom,
-  currImageArrayAtom
+  currImageArrayAtom,
+  userIDAtom
 } from '../store/index'
 import { useNotesList } from '@renderer/hooks/useNotesList'
 import { ChatBox } from './ChatBox'
@@ -25,6 +26,7 @@ export const UserInputArea = ({
   const { selectedNoteIndex } = useNotesList({})
 
   const [model] = useAtom(selectedModelAtom)
+  const [userId] = useAtom(userIDAtom)
 
   const sendFunc = sendFunction(
     setIsWaitingForResponse,
@@ -35,8 +37,10 @@ export const UserInputArea = ({
     setMessage,
     setCurrImageArray,
     contentRef,
-    model
+    model,
+    userId
   )
+
   return selectedNoteIndex != null ? (
     <div className="w-full ">
       <ChatBox

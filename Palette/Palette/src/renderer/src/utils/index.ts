@@ -1,4 +1,7 @@
 import { userInput } from 'src/renderer/shared/model'
+
+
+
 export const handleKeyDown = (
   e: React.KeyboardEvent<HTMLTextAreaElement>, 
   sendFunction: (...args: any[]) => void, 
@@ -16,7 +19,7 @@ export const handleKeyDown = (
 
   if ((e.key === 'Enter' && !e.shiftKey)) {
     e.preventDefault()
-    console.log("inputRef?.current?.value", inputRef?.current?.value)
+    
     if (inputRef?.current && inputRef?.current?.value !== '') {
         sendFunction(inputRef)
         inputRef.current.value = ''
@@ -66,10 +69,9 @@ export const sendFunction = (
   setCurrImageArray: React.Dispatch<React.SetStateAction<(string | ArrayBuffer | null)[]>>,
   contentRef: React.RefObject<HTMLDivElement> | undefined,
   model: string[],
+  userId: string | null,
   
 ) => {
-
-
   return async () => {
     setIsWaitingForResponse(true)
     
@@ -77,7 +79,7 @@ export const sendFunction = (
       setIsWaitingForResponse(false)
       return
     }
-    console.log("message", message)
+    
 
      selectedNoteIndex == null
       ?  createNewNote(message, {
@@ -87,7 +89,7 @@ export const sendFunction = (
        
         })
       : addMessage(message)
-    setMessage('')
+    
     //setCurrImageArray([])
 
     if (contentRef?.current) {

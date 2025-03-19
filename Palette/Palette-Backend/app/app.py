@@ -1,4 +1,5 @@
 from flask import Flask, request, Response, jsonify
+from docx import Document
 from flask_cors import CORS
 from openai import OpenAI
 import firebase_admin
@@ -11,6 +12,7 @@ import json
 import socket
 import base64
 import os
+import io
 # Move Firebase initialization to the global scope, outside of any route
 cred = credentials.Certificate(r"./mock/serviceAccountKey.json")
 try:
@@ -36,18 +38,11 @@ def stream():
     context = request.json['context']
 
     file_data = request.json['files']
+    print("file_data:", file_data)
+   
+    
     model = request.json['model']
     company = request.json['company']
-
-
-    if file_data:
-        #print("entered")
-        file_data = handle_file_load(file_data)
-        #print("file_data:", file_data['all_text'])
-        context.append({"files": file_data['all_text']})
-        for file in file_data['all_paths']:
-            os.remove(file)
-    
 
     db = firestore.client()
     doc_ref = db.collection("users").document(id)
@@ -59,6 +54,28 @@ def stream():
         settings =doc_data.get('settings')  # or doc_data['settings'] if you're sure it exists
     else:
         print("Document does not exist")
+
+    if file_data:
+        #print("entered")
+        
+        file_data = handle_file_load(file_data, message, context, settings)
+       
+        type_file = file_data['all_paths'][0].split('.')[-1]
+        print("type_file:", type_file)
+        
+        context.append({"files": file_data['all_text']})
+        for file in file_data['all_paths']:
+            print("file:", file)
+            os.remove(file)
+        
+        if type_file == 'jpeg' or type_file == 'png' or type_file == 'gif':
+            return Response(file_data['all_text'], mimetype='text/plain')
+        
+            #print("file_data:", file_data['all_text'])
+            
+    
+
+    
     
 
     if company == 'OpenAI':
@@ -80,7 +97,7 @@ def stream_anthropic(message,  context, file_data, model, settings):
             model=model,
         ) as stream:
             for text in stream.text_stream:
-                print(text, end="", flush=True)
+                
                 yield text
 
     return Response(generate(), mimetype='text/plain')
@@ -102,10 +119,12 @@ def stream_openai(message,  context, file_data, model, settings):
         for chunk in stream:
             if chunk.choices[0].delta.content is not None:
                 content = chunk.choices[0].delta.content
+                
                 #print(content, end='', flush=True)  # Print each chunk as it arrives
                 yield content
     
     print("Starting stream response:")
+    
     return generate(), {"Content-Type": "text/plain"}
 
 
@@ -154,7 +173,7 @@ class FileProcessor:
             raise Exception(f"Error processing file: {str(e)}")
 
 
-def handle_file_load(raw_file_data):
+def handle_file_load(raw_file_data, prompt, context, settings):
     allowed_file_data = raw_file_data
    
     
@@ -162,6 +181,7 @@ def handle_file_load(raw_file_data):
     all_text = []
     all_paths = []
     for file in allowed_file_data:
+        file = file['imageData']
         if file:
           
             file_specs = upload_file(file)
@@ -169,11 +189,45 @@ def handle_file_load(raw_file_data):
             if file_specs['file_type'] == 'application/pdf':
                 text = extract_pdf_text(file_specs['file_path'])
                 all_text.append(text['text'])
+            elif file_specs['file_type'] == 'application/vnd.openxmlformats-officedocument.wordprocessingml.document':
+                text = extract_docx_text(file_specs['file_path'])
+                print("text:", text)
+                all_text.append(text['text'])
+            else:
+                text = handle_image(raw_file_data, prompt, context, settings)
+                all_text.append(text)
             all_paths.append(file_specs['file_path'])
     print("all_paths:", all_paths)
     return {"message": "Files uploaded successfully", "all_text": all_text, "all_paths": all_paths}
 
+def handle_image(img, prompt, context, settings):
+    print("entered handle_image")
+    
+    client = OpenAI(api_key=settings['OpenAI'])
+    completion = client.chat.completions.create(
+    model="gpt-4o",
+   
+    messages=[
+        {
+            "role": "user",
+            "content": [
+                { "type": "text", "text": prompt + "Context (only use the context for this chat history):" + str(context) },
+                {
+                    "type": "image_url",
+                    "image_url": {
+                        "url": img[0],
+                    },
+                },
+            ],
+        }
+    ],
+    )
 
+
+    print(completion.choices[0].message.content)
+    return completion.choices[0].message.content
+
+    
 
 def upload_file(file):
     try:
@@ -222,7 +276,11 @@ def upload_file(file):
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-    
+
+def handle_imgage(img):
+    print("entered handle_imgage")
+    print(img)
+    return {"message": "Image processed successfully"}
 
 
 
@@ -234,6 +292,14 @@ def extract_pdf_text(path):
     text = ''
     for page in reader.pages:
         text += page.extract_text()
+    return {"text": text}
+
+def extract_docx_text(file_path):
+    print("ENTERED EXTRACT DOCX TEXT")
+    doc = Document(file_path)
+    text = ''
+    for paragraph in doc.paragraphs:
+        text += paragraph.text + '\n'
     return {"text": text}
 
 

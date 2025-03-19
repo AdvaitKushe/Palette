@@ -1,4 +1,4 @@
-import { ComponentProps, useState, useEffect, memo, useRef } from 'react'
+import { ComponentProps, memo, useRef } from 'react'
 import { twMerge } from 'tailwind-merge'
 import { Message } from '../shared/model'
 import ReactMarkdown from 'react-markdown'
@@ -6,7 +6,7 @@ import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
 //import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism'
 import { CopyButtonInChat } from './components/Buttons'
 import { materialDark } from 'react-syntax-highlighter/dist/esm/styles/prism'
-import { useAtomValue, useSetAtom } from 'jotai'
+import { useAtomValue } from 'jotai'
 import { streamedResponseAtom } from './store'
 
 const CodeBlockAlt = memo(({ code }: { code: string }) => {
@@ -49,7 +49,7 @@ export const ChatResponse = ({
   const ref = useRef<HTMLDivElement>(null)
   //const { displayedText, isTyping } = useTypewriter(message.conversation.response)
   const currentText = useAtomValue(streamedResponseAtom)
-  console.log("typed", typed)
+
  
   
 

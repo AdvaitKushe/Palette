@@ -53,7 +53,7 @@ export const streamedResponseAtom = atom<string>('')
 
 export const tokenAtom = atom<string | null>(null)
 
-export const currImageArrayAtom = atom<(ArrayBuffer | string | null)[]>([''])
+export const currImageArrayAtom = atom<{imageData: ArrayBuffer | string | null, name: string}[]>([{imageData: null, name: ''}])
 
 export const userAtom = atom<User | null>(null)
 
@@ -90,7 +90,7 @@ export const createNewNoteAtom = atom(
           company: model[0],
           model: model[1],
           response: 'Thinking of a response...',
-          files: currImageArray
+          files: currImageArray.map((image) => image.imageData)
         }
       }]
     }
@@ -165,7 +165,7 @@ export const createNewNoteAtom = atom(
         company: model[0],
         model: model[1],
         response: fullResponse,
-        files: currImageArray
+        files: currImageArray.map((image) => image.imageData)
       }
     }]
 
@@ -219,7 +219,7 @@ export const addMessageAtom = atom(
         company: model[0],
         model: model[1],
         response: 'Thinking of a response...',
-        files: currImageArray
+        files: currImageArray.map((image) => image.imageData)
       }
     }
     

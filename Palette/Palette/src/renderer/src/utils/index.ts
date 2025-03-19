@@ -66,7 +66,7 @@ export const sendFunction = (
   message: string,
   selectedNoteIndex: number | null,
   setMessage: React.Dispatch<React.SetStateAction<string>>,
-  setCurrImageArray: React.Dispatch<React.SetStateAction<(string | ArrayBuffer | null)[]>>,
+  setCurrImageArray: React.Dispatch<React.SetStateAction<{imageData: ArrayBuffer | string | null, name: string}[]>>,
   contentRef: React.RefObject<HTMLDivElement> | undefined,
   model: string[],
   userId: string | null,

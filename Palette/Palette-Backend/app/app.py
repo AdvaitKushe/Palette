@@ -92,7 +92,7 @@ def stream_anthropic(message,  context, file_data, model, settings):
 
     def generate():
         with client.messages.stream(
-            max_tokens=1024,
+            
             messages=[{"role": "user", "content": "user prompt:" + message + "Context (only use the context for this chat history):" + str(context)}],
             model=model,
         ) as stream:
@@ -204,9 +204,10 @@ def handle_image(img, prompt, context, settings):
     print("entered handle_image")
     
     client = OpenAI(api_key=settings['OpenAI'])
+    print("img[0]:", img[0])
     completion = client.chat.completions.create(
     model="gpt-4o",
-   
+  
     messages=[
         {
             "role": "user",
@@ -215,7 +216,7 @@ def handle_image(img, prompt, context, settings):
                 {
                     "type": "image_url",
                     "image_url": {
-                        "url": img[0],
+                        "url": img[0]['imageData'],
                     },
                 },
             ],

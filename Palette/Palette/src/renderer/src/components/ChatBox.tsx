@@ -67,7 +67,7 @@ export const ChatBox = ({
 
       <SendChat onClick={() => sendFunction(inputRef)} />
 
-      <div className="border border-zinc-400/50 rounded-[20px] min-h-[110px] w-full overflow-hidden flex">
+      <div className="border border-zinc-400/50 rounded-[20px] min-h-[100px] w-full overflow-hidden flex">
         <textarea
           ref={inputRef}
           rows={1}

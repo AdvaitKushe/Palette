@@ -12,6 +12,7 @@ export interface NoteInfo {
     email: string
     name: string
     picture: string
+    subscription: boolean
   }
   
   export type NoteContent = string

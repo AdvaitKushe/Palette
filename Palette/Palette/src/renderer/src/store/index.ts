@@ -53,7 +53,7 @@ export const streamedResponseAtom = atom<string>('')
 
 export const tokenAtom = atom<string | null>(null)
 
-export const currImageArrayAtom = atom<{imageData: ArrayBuffer | string | null, name: string}[]>([{imageData: null, name: ''}])
+export const currImageArrayAtom = atom<{imageData: ArrayBuffer | string | null, name: string}[]>([])
 
 export const userAtom = atom<User | null>(null)
 

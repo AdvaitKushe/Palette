@@ -3,6 +3,7 @@ import { DropDown } from './DropDowns'
 import { twMerge } from 'tailwind-merge'
 import { tokenAtom, userAtom } from '@renderer/store'
 import { useAtom } from 'jotai'
+import { Billing } from './Billing'
 
 export const Profile = ({ className }: ComponentProps<'div'>) => {
   const buttonRef = useRef<HTMLDivElement>(null)
@@ -42,14 +43,16 @@ export const Profile = ({ className }: ComponentProps<'div'>) => {
 
       {isDropdownOpen && (
         <DropDown
-          className="mt-2 ml-2 bg-zinc-900/60 hover:bg-zinc-600/50 w-20 -translate-x-8"
+          className="mt-2 ml-2 bg-zinc-900/60  w-20 -translate-x-8 mt-3"
           buttonRef={buttonRef}
           onClose={toggleDropdown}
         >
-          <button className="flex items-center justify-center w-full text-sm" onClick={onSignOut}>
+          <button className="flex items-center justify-center w-full text-sm hover:bg-zinc-600/50 transition-all duration-300 rounded-md" onClick={onSignOut}>
             Sign Out
-          </button>
+          </button> 
+          <Billing className= " transition-all duration-300 hover:bg-zinc-600/50 rounded-md" />
         </DropDown>
+           
       )}
     </div>
   )

@@ -12,7 +12,7 @@ export const UpgradeSubscription = () => {
         />
         <FeatureCard
           icon={<Unlink className="h-8 w-8 text-blue-400" />}
-          title="Flexible LLM Choices: No Vendor Lock-In"
+          title="Flexible LLM Choices"
           description="Flexibility to choose without being tied to a single provider."
         />
         <FeatureCard

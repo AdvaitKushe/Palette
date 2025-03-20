@@ -9,15 +9,13 @@ export const ChatHistory = ({
   contentRef,
   onSelect,
   ...props
-}: ComponentProps<'ul'> & { onSelect?: () => void, contentRef?: React.RefObject<HTMLDivElement> }) => {
-
-  
-
+}: ComponentProps<'ul'> & {
+  onSelect?: () => void
+  contentRef?: React.RefObject<HTMLDivElement>
+}) => {
   const { notes, selectedNoteIndex, handleNoteSelect } = useNotesList({
     onSelect: onSelect
   })
-
-
 
   if (!notes) return null
 
@@ -29,7 +27,7 @@ export const ChatHistory = ({
     )
   }
   return (
-    <ul  {...props}>
+    <ul className={twMerge('h-[calc(100vh-50px)] overflow-y-auto', className)} {...props}>
       {notes.map((note, index) => (
         <ChatPreview
           isActive={index === selectedNoteIndex}

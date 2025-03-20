@@ -28,9 +28,13 @@ export const ChatPage = () => {
       {token ? (
         <>
           <RootLayout className="">
-            <Sidebar className="">
-              <SideBarActionRow className="flex justify-end mt-1 " />
-              <ChatHistory contentRef={contentRef} onSelect={onSelect} />
+            <Sidebar className="relative">
+              <SideBarActionRow className="absolute top-0 left-[200px] z-10" />
+              <ChatHistory
+                className="h-full mt-7"
+                contentRef={contentRef}
+                onSelect={onSelect}
+              />
             </Sidebar>
             <Content className="border-l bg-zinc-900/50 border-white/20 flex flex-col p-2 h-screen">
               <ContentActionRow />

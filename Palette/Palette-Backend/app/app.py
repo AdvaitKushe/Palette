@@ -197,6 +197,9 @@ def handle_file_load(raw_file_data, prompt, context, settings):
                 text = handle_image(raw_file_data, prompt, context, settings)
                 all_text.append(text)
             all_paths.append(file_specs['file_path'])
+            print("file_specs['file_path']:", file_specs['file_path'])
+            
+            
     print("all_paths:", all_paths)
     return {"message": "Files uploaded successfully", "all_text": all_text, "all_paths": all_paths}
 
